@@ -1,0 +1,169 @@
+package kr.easw.lesson3;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+import java.util.Scanner;
+
+public class SnakeGameWithoutTails {
+
+    private static final int BOARD_SIZE = 10;
+    // 0 - 빈 타일
+    // 1 - 스네이크 블럭
+    // 2 - 아이템
+    private static final int[][] board = new int[BOARD_SIZE][BOARD_SIZE];
+
+    private static final Random RANDOM = new Random();
+
+    private static int score = 0;
+
+    private static SnakeLocation location = new SnakeLocation(0, 0);
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        while (true) {
+            printBoard();
+            System.out.print("[우측 (r) | 좌측 (l) | 위 (u) | 아래 (d) | 종료 (0) ] : ");
+            if (!nextDirection(scanner.next())) {
+                System.out.println("게임 오버!");
+                System.out.printf("점수: %d\n", score);
+                break;
+            }
+            if (!hasItemOnBoard())
+                placeRandomItem();
+        }
+    }
+
+    /**
+     * 해당 메서드는 다음과 같은 역할을 가져야 합니다 :
+     * 사용자의 입력을 받고, 다음 위치로 옮기거나 게임을 종료해야 합니다.
+     * <p>
+     * 허용되는 입력은 다음과 같습니다 :
+     * - 우측(r) | 좌측 (l) | 위 (u) | 아래 (d) | 종료 (0)
+     * <p>
+     * 다음 좌표는 location 변수에 계속해서 업데이트되어야 합니다.
+     * 만약 다음 좌표에 아이템이 존재한다면, 점수를 1 증가하고 다음 좌표의 값을 0으로 되돌려야 합니다.
+     *
+     * 만약 값이 최대 값 (BOARD_SIZE)이상이 되거나 최소 값(0) 아래로 내려간다면 같은 좌표로 설정하여 이동하지 않도록 해야합니다.
+     *
+     * 만약 사용자의 입력이 종료(0)였다면, false값을 반환하여 게임을 종료해야 합니다.
+     */
+    private static boolean nextDirection(String keyword) {
+        //throw new RuntimeException("이 코드 라인을 지우고, 이곳에서 작성하십시오.");
+    	int newX = location.getX();
+        int newY = location.getY();
+
+        switch (keyword) {
+            case "r":
+                newY++; // 우측으로 이동
+                break;
+            case "l":
+                newY--; // 좌측으로 이동
+                break;
+            case "u":
+                newX--; // 위쪽으로 이동
+                break;
+            case "d":
+                newX++; // 아래쪽으로 이동
+                break;
+            case "0":
+                return false; // 게임 종료
+            default:
+                System.out.println("유효하지 않은 입력입니다.");
+                return true; // 다음 입력을 받기 위해 true 반환
+        }
+
+        // 새로운 위치가 보드를 벗어나는지 확인하여 처리합니다.
+        if (newX < 0 || newX >= BOARD_SIZE || newY < 0 || newY >= BOARD_SIZE) {
+            System.out.println("보드를 벗어납니다.");
+            return true; // 다음 입력을 받기 위해 true 반환
+        }
+
+        // 스네이크가 이동한 위치를 새로운 위치로 설정합니다.
+        location = new SnakeLocation(newX, newY);
+
+        // 아이템을 먹었는지 확인하고 처리합니다.
+        if (board[newX][newY] == 2) {
+            score++; // 점수 증가
+            board[newX][newY] = 0; // 아이템을 먹었으므로 해당 위치를 빈 타일로 변경
+        }
+
+        return true; // 다음 입력을 받기 위해 true 반환
+    }
+
+    private static void printBoard() {
+        for (int i = 0; i < 25; i++) {
+            System.out.println();
+        }
+        for (int x = 0; x < BOARD_SIZE; x++) {
+            for (int y = 0; y < BOARD_SIZE; y++) {
+                if (location.getX() == x && location.getY() == y) {
+                    System.out.print("◼ ");
+                    continue;
+                }
+                switch (board[x][y]) {
+                    case 0:
+                        System.out.print("・ ");
+                        break;
+                    case 1:
+                        System.out.print("◼");
+                        break;
+                    case 2:
+                        System.out.print("* ");
+                        break;
+                }
+            }
+            System.out.println();
+        }
+    }
+
+    private static void placeRandomItem() {
+        // for문의 조건으로 랜덤을 넣을 경우, 계속 비교하여 최종 결과값이 바뀌므로 변수로 선언합니다.
+        int toPlace = (int) (RANDOM.nextDouble() * 10);
+        for (int i = 0; i < toPlace; i++) {
+            int retry = 0;
+            while (retry < 5) {
+                SnakeLocation locate = new SnakeLocation((int) (RANDOM.nextDouble() * (BOARD_SIZE - 1)), (int) (RANDOM.nextDouble() * (BOARD_SIZE - 1)));
+                if (board[locate.getX()][locate.getY()] != 0) {
+                    retry++;
+                    continue;
+                }
+                board[locate.getX()][locate.getY()] = 2;
+                break;
+            }
+        }
+    }
+
+    private static boolean hasItemOnBoard() {
+        for (int x = 0; x < BOARD_SIZE; x++) {
+            for (int y = 0; y < BOARD_SIZE; y++) {
+                if (board[x][y] == 2) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private static class SnakeLocation {
+        private final int x;
+        private final int y;
+
+        public SnakeLocation(int x, int y) {
+            this.x = x;
+            this.y = y;
+        }
+
+        public int getX() {
+            return x;
+        }
+
+        public int getY() {
+            return y;
+        }
+
+        public SnakeLocation adjust(int x, int y) {
+            return new SnakeLocation(this.x + x, this.y + y);
+        }
+    }
+}
